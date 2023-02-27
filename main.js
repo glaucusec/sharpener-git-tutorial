@@ -1,6 +1,7 @@
 let form = document.querySelector('#my-form');
-let itemList = document.querySelector('#items');
+
 form.addEventListener('submit', saveItems);
+// itemList.addEventListener('click', removeItem);
 
 function saveItems(e) {
     e.preventDefault();
@@ -8,7 +9,6 @@ function saveItems(e) {
     fName = document.getElementById('name').value;
     fEmail = document.getElementById('email').value;
     fPhone = document.getElementById('phone').value;
-
 
     userDetails = {
         'userName': fName,
@@ -18,9 +18,22 @@ function saveItems(e) {
 
     // converting object & storing as string
     localStorage.setItem(fEmail, JSON.stringify(userDetails));
+    showUserOnScreen(userDetails);
+}  
+function showUserOnScreen(obj) { 
+    const itemList = document.querySelector('#items');
+    let newLi = document.createElement('li');
+    newLi.textContent = obj.userName+' - '+obj.userEmail+ ' - ' + obj.userPhone;
 
-    newLi = document.createElement('li');
-    newLi.appendChild(document.createTextNode(fName
-        + ' - ' + fEmail + ' - ' + fPhone));
+    let delBtn = document.createElement('input');
+    delBtn.type = 'button';
+    delBtn.value = "Delete";
+    delBtn.onclick = () => {
+        localStorage.removeItem(obj.userEmail);
+        itemList.removeChild(newLi);
+    }
+    
+    newLi.appendChild(delBtn);
     itemList.appendChild(newLi);
 }
+
