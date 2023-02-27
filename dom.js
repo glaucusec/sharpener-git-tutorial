@@ -1,6 +1,8 @@
-var form  = document.getElementById('addForm');
+let form  = document.getElementById('addForm');
 let itemList = document.getElementById('items');
 let filter = document.getElementById('filter');
+
+console.log(form);
 
 // form submit event
 form.addEventListener('submit', addItem);
@@ -15,20 +17,26 @@ function addItem(e) {
 
     // get the input value
     let newItem = document.getElementById('item').value;
+    let newDesc = document.getElementById('desc').value;
     // create new li element
     let li = document.createElement('li');
     // add class
     li.className = 'list-group-item';
     // Add textnode with input value
-    li.appendChild(document.createTextNode(newItem));
+    li.appendChild(document.createTextNode(newItem + ' ' + newDesc));
 
     // create the delte button element
     let deleteBtn = document.createElement('button');
+    let editBtn = document.createElement('button');
+
     deleteBtn.className = 'btn btn-danger btn-sm float-right delete';
+    editBtn.className = 'btn btn-primary btn-sm float-right edit'
     // append text node
     deleteBtn.appendChild(document.createTextNode('X'));
+    editBtn.appendChild(document.createTextNode('Edit'));
     // append button to li
     li.appendChild(deleteBtn);
+    li.appendChild(editBtn);
 
     // append li to list
     itemList.appendChild(li);
