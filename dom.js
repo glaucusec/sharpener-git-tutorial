@@ -1,61 +1,61 @@
-// traversing the dom
-let itemList = document.querySelector('#items');
-// parentNode
-// console.log(itemList.parentNode);
-// itemList.parentNode.style.backgroundColor = "#f4f4f4";
-// console.log(itemList.parentNode.parentNode.parentNode);
+var form  = document.getElementById('addForm');
+let itemList = document.getElementById('items');
+let filter = document.getElementById('filter');
 
-// parentElement
-// console.log(itemList.parentElement);
-// itemList.parentElement.style.backgroundColor = "#f4f4f4";
-// console.log(itemList.parentElement.parentElement.parentElement);
+// form submit event
+form.addEventListener('submit', addItem);
+// Delete event
+itemList.addEventListener('click', removeItem);
+// filter event
+filter.addEventListener('keyup', filterItems);
 
+// addItem function
+function addItem(e) {
+    e.preventDefault();
 
-// childNodes
-// console.log(itemList.childNodes);
+    // get the input value
+    let newItem = document.getElementById('item').value;
+    // create new li element
+    let li = document.createElement('li');
+    // add class
+    li.className = 'list-group-item';
+    // Add textnode with input value
+    li.appendChild(document.createTextNode(newItem));
 
-// children
-// console.log(itemList.children);
-// console.log(itemList.children[1]);
-// itemList.children[1].style.backgroundColor = "yellow";
+    // create the delte button element
+    let deleteBtn = document.createElement('button');
+    deleteBtn.className = 'btn btn-danger btn-sm float-right delete';
+    // append text node
+    deleteBtn.appendChild(document.createTextNode('X'));
+    // append button to li
+    li.appendChild(deleteBtn);
 
-// firstChild
-// console.log(itemList.firstElementChild.textContent);
-// itemList.firstElementChild.textContent = "Hellooo 1";
+    // append li to list
+    itemList.appendChild(li);
+}
 
-// lastChild
-// itemList.lastElementChild.textContent = "BYEEE 1"
+function removeItem(e) {
+    if(e.target.classList.contains('delete')) {
+        if(confirm("Are you sure?")) {
+            let li = e.target.parentElement;
+            itemList.removeChild(li);
+        }
+    }
+}
 
-// siblings
-// console.log(itemList.nextElementSibling)
-
-// previosSibling
-// console.log(itemList.previousElementSibling);
-// itemList.previousElementSibling.style.color = "green";
-
-// createElement
-// create a div
-let newDiv = document.createElement('div');
-// add class
-newDiv.className = "hello";
-// add id
-newDiv.id = "hello1";
-// add attr
-newDiv.setAttribute('title', 'Hello Div')
-// create a text node
-let newDivText = document.createTextNode('Hello World');
-// add text to div
-newDiv.appendChild(newDivText);
-
-let container = document.querySelector('header .container');
-let h1 = document.querySelector('header h1');
-
-newDiv.style.fontSize = '20px';
-// adding before ItemLister
-container.insertBefore(newDiv, h1);
-
-// adding before item1
-let item1 = document.querySelector("#items");
-let item2 = document.querySelector(".container ul").children[0];
-
-item1.insertBefore(newDiv, item2);
+function filterItems(e) {
+    // convert text to lowercase
+    let text = e.target.value.toLowerCase();
+    // get lists
+    let items = itemList.getElementsByTagName('li');
+    // conver to an array
+    Array.from(items).forEach(function(item) {
+        let itemName = item.firstChild.textContent;
+        if(itemName.toLowerCase().indexOf(text) != -1) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+}
