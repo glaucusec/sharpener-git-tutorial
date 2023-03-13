@@ -17,7 +17,10 @@ function saveItems(e) {
     };
 
     // converting object & storing as string
-    localStorage.setItem(fEmail, JSON.stringify(userDetails));
+    axios.post('https://crudcrud.com/api/8bfba5b0416e491e947ed1fb60b74b05/userdetails', userDetails)
+        .then((response) => console.log(response))
+        .catch((err) => console.log(err))
+
     showUserOnScreen(userDetails);
 }  
 function showUserOnScreen(obj) { 
@@ -50,3 +53,20 @@ function showUserOnScreen(obj) {
     itemList.appendChild(newLi);
 }
 
+function showDefault() {
+    const itemList = document.querySelector('#items');
+    
+    axios.get('https://crudcrud.com/api/8bfba5b0416e491e947ed1fb60b74b05/userdetails')
+        .then((response) => {
+            data = response.data;
+            for(let i=0;i<data.length;i++) {
+                obj = data[i];
+                let newLi = document.createElement('li');
+                newLi.textContent = obj.userName+' - '+obj.userEmail+ ' - ' + obj.userPhone;
+                itemList.appendChild(newLi);
+            }
+        })
+    .catch((error) => console.log(error));
+}
+
+showDefault();
