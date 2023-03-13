@@ -32,7 +32,6 @@ function showUserOnScreen(obj) {
     delBtn.type = 'button';
     delBtn.value = "Delete";
     delBtn.onclick = () => {
-        localStorage.removeItem(obj.userEmail);
         itemList.removeChild(newLi);
     }
 
@@ -43,8 +42,6 @@ function showUserOnScreen(obj) {
         document.getElementById('name').value = obj.userName;
         document.getElementById('email').value = obj.userEmail;
         document.getElementById('phone').value = obj.userPhone;
-
-        localStorage.removeItem(obj.userEmail);
         itemList.removeChild(newLi);
     }
     
@@ -63,6 +60,23 @@ function showDefault() {
                 obj = data[i];
                 let newLi = document.createElement('li');
                 newLi.textContent = obj.userName+' - '+obj.userEmail+ ' - ' + obj.userPhone;
+                let delBtn = document.createElement('input');
+                    delBtn.type = 'button';
+                    delBtn.value = "Delete";
+                    delBtn.onclick = () => {
+                        itemList.removeChild(newLi);
+                    }
+                let editBtn = document.createElement('input');
+                editBtn.type = 'button';
+                editBtn.value = "Edit";
+                editBtn.onclick = () => {
+                    document.getElementById('name').value = obj.userName;
+                    document.getElementById('email').value = obj.userEmail;
+                    document.getElementById('phone').value = obj.userPhone;
+                    itemList.removeChild(newLi);
+                }
+                newLi.appendChild(delBtn);
+                newLi.appendChild(editBtn);
                 itemList.appendChild(newLi);
             }
         })
