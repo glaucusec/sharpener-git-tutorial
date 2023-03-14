@@ -64,8 +64,13 @@ function showDefault() {
                     delBtn.type = 'button';
                     delBtn.value = "Delete";
                     delBtn.onclick = () => {
-                        itemList.removeChild(newLi);
-                    }
+                        console.log(obj._id)
+                        axios.delete(`https://crudcrud.com/api/8bfba5b0416e491e947ed1fb60b74b05/userdetails/${obj._id}`)
+                          .then(() => {
+                            itemList.removeChild(newLi);
+                          })
+                          .catch((err) => console.log(err));
+                      }
                 let editBtn = document.createElement('input');
                 editBtn.type = 'button';
                 editBtn.value = "Edit";
