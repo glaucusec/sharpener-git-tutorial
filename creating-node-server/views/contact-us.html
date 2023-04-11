@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Book a Call</title>
+    <link rel="stylesheet" href="/css/main.css">
+	<style>
+		form {
+			border: 1px solid black;
+			padding: 20px;
+			width: 400px;
+			margin: 0 auto;
+		}
+
+		h1 {
+			text-align: center;
+		}
+
+		input[type=text], input[type=email], input[type=tel], select {
+			display: block;
+			margin-bottom: 10px;
+			width: 100%;
+			padding: 10px;
+			border: 1px solid #ccc;
+			border-radius: 4px;
+			box-sizing: border-box;
+			font-size: 16px;
+		}
+
+		input[type=submit] {
+			background-color: #4CAF50;
+			color: white;
+			padding: 10px 20px;
+			border: none;
+			border-radius: 4px;
+			cursor: pointer;
+			font-size: 16px;
+		}
+
+		input[type=submit]:hover {
+			background-color: #45a049;
+		}
+	</style>
+</head>
+<body>
+    <header class="main-header">
+        <nav class="main-header__nav">
+            <ul class="main-header__item-list">
+                <li class="main-header__item"><a class="active" href="/">Shop</a></li>
+                <li class="main-header__item"><a href="/admin/add-product">Add Product</a></li>
+                <li class="main-header__item"><a href="/contact-us">Contact Us</a></li>
+            </ul>
+        </nav>
+    </header>
+	<form action="/success" method="post">
+		<h1>Books a Call</h1>
+		<label for="name">Name</label>
+		<input type="text" id="name" name="name" required>
+
+		<label for="email">Email</label>
+		<input type="email" id="email" name="email" required>
+
+		<label for="phone">Phone Number</label>
+		<input type="tel" id="phone" name="phone" required>
+
+		<label for="time">Best Time for Call</label>
+		<select id="time" name="time">
+			<option value="morning">Morning (9am - 12pm)</option>
+			<option value="afternoon">Afternoon (12pm - 4pm)</option>
+			<option value="evening">Evening (4pm - 7pm)</option>
+		</select>
+
+		<input type="submit" value="Get a Call">
+	</form>
+</body>
+</html>
