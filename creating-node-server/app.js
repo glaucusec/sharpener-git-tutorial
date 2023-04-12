@@ -9,23 +9,20 @@ const app = express();
 const adminRoutes = require('./routes/admin');
 const shopRoutes = require('./routes/shop');
 
+const contactUsController = require('./controllers/contact-us');
+const errorPageController = require('./controllers/error');
+
 app.use(bodyParser.urlencoded({extended: false}));
 app.use(express.static(path.join(__dirname, 'public')))
 
 app.use('/admin', adminRoutes);
 app.use(shopRoutes);
 
-app.get('/contact-us', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'contact-us.html'))
-})
+app.get('/contact-us', contactUsController.getContactUs);
 
-app.post('/success', (req, res) => {
-    res.sendFile(path.join(__dirname, 'views', 'success.html'));
-})
+app.post('/success', contactUsController.getSuccessPage);
 
-app.use((req, res, next) => {
-    res.status(404).sendFile(path.join(__dirname, 'views', '404.html'))
-});
+app.use('', errorPageController.getErrorPage);
 
 
 app.listen(3000);
