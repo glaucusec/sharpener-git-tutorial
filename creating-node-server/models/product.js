@@ -1,92 +1,49 @@
 const fs = require('fs');
-const path  = require('path')
-const rootDir = require('../util/path');
+const path = require('path');
 
-const getProductsFromFile = (cb) => {
-    const p = path.join(rootDir, 
-        'data', 
-        'products.json'
-    );
-    fs.readFile(p, (err, fileContent) => {
-        if(err) {
-            cb([])
-        } else {
-            cb(JSON.parse(fileContent));
-        }
-    });
-}
+const p = path.join(
+  path.dirname(process.mainModule.filename),
+  'data',
+  'products.json'
+);
 
-
-module.exports = class Product {
-    constructor(t) {
-        this.title = t
+const getProductsFromFile = cb => {
+  fs.readFile(p, (err, fileContent) => {
+    if (err) {
+      cb([]);
+    } else {
+      cb(JSON.parse(fileContent));
     }
-
-    save() {
-        getProductsFromFile(products => {
-            products.push(this);
-            const p = path.join(rootDir, 'data', 'products.json');
-            fs.writeFile(p, JSON.stringify(products), (err) => {
-                console.log(err);
-            });
-        });
-    }
-
-    static fetchAll(cb) {
-        getProductsFromFile(cb);
-    }
+  });
 };
 
+module.exports = class Product {
+  constructor(title, imageUrl, description, price) {
+    this.title = title;
+    this.imageUrl = imageUrl;
+    this.description = description;
+    this.price = price;
+  }
 
-// module.exports = class Product {
-//     constructor(t) {
-//         this.title = t
-//     }
+  save() {
+    this.id = Math.random().toString();
+    getProductsFromFile(products => {
+      products.push(this);
+      fs.writeFile(p, JSON.stringify(products), err => {
+        console.log(err);
+      });
+    });
+  }
 
-//     fileData() {
-//         const p = path.join(rootDir, 
-//             'data', 
-//             'products.json'
-//         );
-//         return new Promise((resolve, reject) => {
-//             fs.readFile(p, (err, fileContent) => {
-//                 if (err) {
-//                     reject("")
-//                 } else {
-//                     resolve(fileContent);
-//                 }
-//             });
-//         });
-//     }
+  static fetchAll(cb) {
+    getProductsFromFile(cb);
+  }
 
-//     async save() {
-//         try {
-//             const fileContent = await this.fileData(); // wait for the Promise to be resolved
-//             let products = [];
-//             if (fileContent !== "") { 
-//                 products = JSON.parse(fileContent);
-//             }
-//             products.push(this);
-//             const p = path.join(rootDir, 'data', 'products.json');
-//             fs.writeFile(p, JSON.stringify(products), (err) => {
-//                 if (err) { console.log(err);}
-//             });
-//         } catch (err) {
-//             console.log(err);
-//         }
-//     }
-    
+  static findById(id, cb) {
+    getProductsFromFile(products => {
+        const product = products.find(p => p.id === id);
+        cb(product);
+    });
+  }
 
-//     static fetchAll(cb) {
-//         const p = path.join(rootDir, 
-//             'data', 
-//             'products.json'
-//         );
-//         fs.readFile(p, (err, fileContent) => {
-//             if (err) {
-//                 cb([]);
-//             }
-//             cb(JSON.parse(fileContent));
-//         });
-//     }
-// }
+};
