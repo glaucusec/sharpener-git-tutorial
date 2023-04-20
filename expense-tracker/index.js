@@ -29,7 +29,7 @@ function showUserOnScreen() {
             let newLi = document.createElement('li');
             newLi.textContent = currKeyItem.amount + ' - ' +
                 currKeyItem.desc + ' - ' + currKeyItem.category;
-            
+
             // Adding delete button
             let delBtn = document.createElement('input');
             delBtn.type = 'button';
@@ -39,7 +39,7 @@ function showUserOnScreen() {
                 localStorage.removeItem(currKeyItem.desc);
                 itemList.removeChild(newLi);
             }
-            
+
             // Adding Edit Button
             let editBtn = document.createElement('input');
             editBtn.type = 'button';
@@ -49,7 +49,7 @@ function showUserOnScreen() {
                 document.getElementById('amountInputBox').value = currKeyItem.amount;
                 document.getElementById('descInputBox').value = currKeyItem.desc;
                 document.getElementById('catInputBox').value = currKeyItem.category;
-        
+
                 localStorage.removeItem(currKeyItem.desc);
                 itemList.removeChild(newLi);
             }
@@ -59,7 +59,7 @@ function showUserOnScreen() {
             itemList.appendChild(newLi);
         }
       }
-    
+
 }
 
 showUserOnScreen();
