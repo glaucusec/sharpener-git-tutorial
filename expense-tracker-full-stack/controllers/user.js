@@ -7,6 +7,10 @@ exports.getSignUpPage = (req, res, next) => {
     res.sendFile(path.join(rootDir, 'views', 'signup.html'));
 }
 
+exports.getLoginPage = (req, res, next) => {
+    res.sendFile(path.join(rootDir, 'views', 'login.html'));
+}
+
 exports.postSignUpData = (req, res, next) => {
     const name = req.body.name;
     const email = req.body.email;
@@ -22,5 +26,26 @@ exports.postSignUpData = (req, res, next) => {
     })
     .catch(err => {
         res.status(403).json({error: "Email is already taken"});
+    });
+}
+
+exports.postLoginData = (req, res, next) => {
+    const email = req.body.email;
+    const password = req.body.password;
+
+    User.findOne({
+        where: {
+            email: email
+        }
+    })
+    .then(result => {
+        if(result.email == email && result.password == password) {
+            res.send("Logged In");
+        } else if( res.password != password ) {
+            res.status(403).json( { error: "Incorrect Password" } );
+        }
+    })
+    .catch(err => {
+        res.status(403).json( {error: "User Doesn't Exist"});
     });
 }
