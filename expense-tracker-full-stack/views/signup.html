@@ -28,7 +28,10 @@
                     <label for="password" class="form-label">Password</label>
                     <input type="text" class="form-control" placeholder="Enter Your Password" name="password" required> 
                 </div>
-                <input type="submit" class="btn btn-primary" id="submit" value="signup">
+                <input type="submit" class="btn btn-primary" id="submit" value="Sign Up">
+                <div class="mb-3">
+                    <div id="message"></div>
+                </div>
             </form>
         </div>
     </div>
@@ -44,6 +47,16 @@
                     'Content-Type': 'application/json'
                 }
             })
+            .then(res => {
+                const message = document.querySelector('#message');
+                message.textContent = 'Sign Up Successful';
+                message.style.color = 'red';
+            })
+            .catch(err=> {
+                const message = document.querySelector('#message');
+                message.textContent = err.response.data.error;
+                message.style.color = 'red'
+            });
         })
     </script>
 
