@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 
 const rootDir = require('../util/path');
 const User = require('../models/user');
+const Expense = require('../models/expense');
 
 exports.getSignUpPage = (req, res, next) => {
     res.sendFile(path.join(rootDir, 'views', 'signup.html'));
@@ -47,7 +48,7 @@ exports.postLoginData = (req, res, next) => {
             .compare(password, result.password)
             .then(passwordsMatch => {
                 if(passwordsMatch) {
-                    res.send("User Login Successful");
+                    res.redirect('/user/daily-expenses'); // Just response `something`
                 } else {
                     res.status(401).json({ error: "Incorrect Password" });
                 }
@@ -59,4 +60,40 @@ exports.postLoginData = (req, res, next) => {
     .catch(err => {
         res.status(403).json( {error: "User not found"});
     });
+}
+
+exports.getDailyExpenses = (req, res, next) => {
+    res.sendFile(path.join(rootDir, 'views', 'expenses.html'))
+}
+
+exports.getExpenses = (req, res, next) => {
+    Expense.findAll()
+        .then(expenses => {
+            res.json(expenses);
+            res.end();
+        })
+        .catch(err => console.log(err));
+}
+
+exports.postExpenses = (req, res, next) => {
+    const { amount, description, category } = req.body;
+
+    Expense.create( { amount, description, category })
+        .then(result => {
+            console.log('Created Expense on Database');
+            res.redirect('/user/expenses');
+        })
+        .catch(err => console.log(err));
+}
+
+exports.postDeleteExpense = (req, res, next) => {
+    const id = req.body.id;
+
+    Expense.destroy({
+        where: {
+            id: id
+        }
+    })
+    .then(res.redirect('/user/daily-expenses'))
+    .catch(error => res.status(500).json( {error: "Internal Server Error" }));
 }

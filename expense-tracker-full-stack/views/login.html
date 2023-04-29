@@ -45,7 +45,7 @@
                 }
             })
             .then(res => {
-                alert(res.data);
+                window.location.href="/user/daily-expenses";
             })
             .catch(err => {
                 alert(err.response.data.error);

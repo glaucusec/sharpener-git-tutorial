@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Expenses</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-GLhlTQ8iRABdZLl6O3oVMWSktQOp6b7In1Zl3/Jr59b6EGGoI1aFkw7cmDA6j6gD" crossorigin="anonymous">
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-12">
+                <h1 class="display-1" style="text-align: center;">Expense Tracker</h1>
+            </div>
+        </div>
+        <div class="row">
+            <form id="expense-form">
+                <div class="mb-3">
+                    <input hidden type="number" name="id" class="form-control" id="idInputBox">    
+                </div>
+                <div class="mb-3">
+                    <label for="amountInput" class="form-label">Amount Input</label>
+                    <input type="number" name="amount" placeholder="Enter the Amount" class="form-control" id="amountInputBox">    
+                </div>
+                <div class="mb-3">
+                    <label for="description"  class="form-label">Description</label>
+                    <input type="text" name="description" class="form-control" placeholder="Write the description" id="descInputBox"> 
+                </div>
+                <div class="mb-3">
+                    <label for="category" class="form-label">Category</label>
+                    <select name="category" class="form-select" id="catInputBox">
+                        <option>Fuel</option>
+                        <option>Entertainment</option>
+                        <option>Beauty/Wellness</option>
+                        <option>Pets</option>
+                        <option>Shopping</option>
+                    </select>
+                </div>
+
+                <button type="submit" class="btn btn-info">Submit</button>
+            </form>
+            <div class="mb-3">
+                <hr>
+            </div>
+        </div>
+
+        <table class="table">
+            <thead  class="thead">
+                <tr>
+                    <th scope="col">#</th>
+                    <th scope="col">Amount</th>
+                    <th scope="col">Description</th>
+                    <th scope="col">Category</th>
+                    <th scope="col">Delete</th>
+                    <th scope="col">Edit</th>
+                </tr>
+            </thead>
+            <tbody class="tbody">
+
+            </tbody>
+        </table>
+    </div>
+
+    
+    <!-- <script src="index.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js" integrity="sha384-w76AqPfDkMBDXo30jS1Sgez6pr3x5MlQ1ZAGC+nuZB+EYdgRZgiwxhTBTkF7CXvN" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+    <script>
+        const formEl = document.querySelector('#expense-form');
+        // sending the form data to the backend
+
+        formEl.addEventListener('submit', (e) => {
+            e.preventDefault();
+
+            const {result} = axios.post('http://localhost:3000/user/expenses', document.querySelector('#expense-form'), {
+                headers: {
+                   'Content-Type': 'application/json'
+                }
+            })
+            .then(window.location.href = 'http://localhost:3000/user/daily-expenses');
+        })
+        
+        const tbody = document.querySelector('.tbody'); 
+
+        function addExpenseToScreen(expense) {
+            const tr = document.createElement('tr');
+
+            const tdId = document.createElement('td');
+            tdId.textContent = expense.id;
+
+            const tdAmount = document.createElement('td');
+            tdAmount.textContent = expense.amount;
+
+            const tdDesc = document.createElement('td');
+            tdDesc.textContent = expense.description;
+
+            const tdCategory = document.createElement('td');
+            tdCategory.textContent = expense.category;
+
+            // Adding the Delete Button
+            const tdDelete = document.createElement('td');
+            const delBtn = document.createElement('input');
+            delBtn.type = 'button';
+            delBtn.value = 'Delete';
+            delBtn.classList.add('btn', 'btn-danger');
+            delBtn.onclick = () => {
+                let expense_id = expense.id;
+                axios.delete('/user/delete', {
+                    data: {
+                        id: expense_id
+                    }
+                })
+                .then(window.location.href = 'http://localhost:3000/user/daily-expenses')
+                .catch(err => console.log(err));
+            }
+            tdDelete.appendChild(delBtn);
+
+            // Adding the Edit Button
+            const tdEdit = document.createElement('td');
+            const editBtn = document.createElement('input');
+            editBtn.type = 'button';
+            editBtn.value = 'Edit';
+            editBtn.classList.add('btn', 'btn-warning');
+            editBtn.onclick = () => {
+                document.getElementById('idInputBox').value = expense.id;
+                document.getElementById('amountInputBox').value = expense.amount;
+                document.getElementById('descInputBox').value = expense.description;
+                document.getElementById('catInputBox').value = expense.category;
+            }
+            tdEdit.appendChild(editBtn);
+
+            tr.appendChild(tdId);
+            tr.appendChild(tdAmount);
+            tr.appendChild(tdDesc);
+            tr.appendChild(tdCategory);
+            tr.appendChild(tdDelete);
+            tr.appendChild(tdEdit);
+
+            tbody.appendChild(tr);
+        }
+
+        // Showing existing expenses.
+        async function fetchExpenses() {
+            let response = await axios.get('http://localhost:3000/user/expenses');
+            let data = response.data;
+            data.forEach(expense => {
+                addExpenseToScreen(expense);
+            });
+        }
+
+        fetchExpenses();
+    </script>
+</body>
+</html>
