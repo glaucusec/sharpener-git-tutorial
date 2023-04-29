@@ -40,12 +40,12 @@ exports.postLoginData = (req, res, next) => {
     })
     .then(result => {
         if(result.email == email && result.password == password) {
-            res.send("Logged In");
+            res.send("User Login Successful");
         } else if( res.password != password ) {
-            res.status(403).json( { error: "Incorrect Password" } );
+            res.status(401).json( { error: "Incorrect Password" } );
         }
     })
     .catch(err => {
-        res.status(403).json( {error: "User Doesn't Exist"});
+        res.status(403).json( {error: "User not found"});
     });
 }
