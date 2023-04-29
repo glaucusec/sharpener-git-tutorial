@@ -1,4 +1,5 @@
 const path = require('path');
+const bcrypt = require('bcrypt');
 
 const rootDir = require('../util/path');
 const User = require('../models/user');
@@ -12,26 +13,29 @@ exports.getLoginPage = (req, res, next) => {
 }
 
 exports.postSignUpData = (req, res, next) => {
-    const name = req.body.name;
-    const email = req.body.email;
-    const password = req.body.password;
+    const { name, email, password } = req.body;
 
-    User.create( {
-        name: name, 
-        email: email, 
-        password: password
-    })
-    .then(result => {
-        res.send(result);
-    })
-    .catch(err => {
-        res.status(403).json({error: "Email is already taken"});
-    });
+    const saltrounds = 10;
+    bcrypt
+        .hash(password, saltrounds)
+        .then(hash => {
+            User.create( {
+                name: name, 
+                email: email, 
+                password: hash
+            })
+            .then(result => {
+                res.send(result);
+            })
+            .catch(err => {
+                res.status(403).json({ error: 'Email is already taken' });
+            })
+        })
+        .catch(err => console.log(err));
 }
 
 exports.postLoginData = (req, res, next) => {
-    const email = req.body.email;
-    const password = req.body.password;
+    const { email, password } = req.body;
 
     User.findOne({
         where: {
@@ -39,11 +43,18 @@ exports.postLoginData = (req, res, next) => {
         }
     })
     .then(result => {
-        if(result.email == email && result.password == password) {
-            res.send("User Login Successful");
-        } else if( res.password != password ) {
-            res.status(401).json( { error: "Incorrect Password" } );
-        }
+        bcrypt
+            .compare(password, result.password)
+            .then(passwordsMatch => {
+                if(passwordsMatch) {
+                    res.send("User Login Successful");
+                } else {
+                    res.status(401).json({ error: "Incorrect Password" });
+                }
+            })
+            .catch(err => {
+                res.status(500).json( { error: "Internal Server Error" });
+            })
     })
     .catch(err => {
         res.status(403).json( {error: "User not found"});
