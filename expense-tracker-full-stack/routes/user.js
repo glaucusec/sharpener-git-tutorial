@@ -2,7 +2,9 @@ const express = require('express');
 
 const router = express.Router();
 
-const userController = require('../controllers/user.js')
+const userController = require('../controllers/user')
+
+const userAuthentication = require('../middleware/auth');
 
 router.get('/signup', userController.getSignUpPage);
 
@@ -14,7 +16,7 @@ router.post('/login', userController.postLoginData);
 
 router.get('/daily-expenses', userController.getDailyExpenses);
 
-router.get('/expenses', userController.getExpenses);
+router.get('/expenses', userAuthentication.authenticate, userController.getExpenses);
 
 router.post('/expenses', userController.postExpenses);
 

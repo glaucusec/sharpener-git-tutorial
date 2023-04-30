@@ -73,10 +73,11 @@
 
         formEl.addEventListener('submit', (e) => {
             e.preventDefault();
-
+            const token = localStorage.getItem('token');
             const {result} = axios.post('http://localhost:3000/user/expenses', document.querySelector('#expense-form'), {
                 headers: {
-                   'Content-Type': 'application/json'
+                   'Content-Type': 'application/json',
+                   'Authorization': token
                 }
             })
             .then(window.location.href = 'http://localhost:3000/user/daily-expenses');
@@ -107,7 +108,11 @@
             delBtn.classList.add('btn', 'btn-danger');
             delBtn.onclick = () => {
                 let expense_id = expense.id;
+                let token = localStorage.getItem('token');
                 axios.delete('/user/delete', {
+                    headers: {
+                        'Authorization': token
+                    },
                     data: {
                         id: expense_id
                     }
@@ -143,7 +148,12 @@
 
         // Showing existing expenses.
         async function fetchExpenses() {
-            let response = await axios.get('http://localhost:3000/user/expenses');
+            const token = localStorage.getItem('token');
+            let response = await axios.get('http://localhost:3000/user/expenses', {
+                headers: {
+                    "Authorization": token
+                }
+            });
             let data = response.data;
             data.forEach(expense => {
                 addExpenseToScreen(expense);

@@ -1,9 +1,14 @@
 const path = require('path');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
 const rootDir = require('../util/path');
 const User = require('../models/user');
 const Expense = require('../models/expense');
+
+function generateAccessToken(id, name) {
+    return jwt.sign( { userId: id, name: name } , '960205f013958a9fd80d704a02d18b599fd390c84f508fbcdbdc9de42a3248597f7832fdbf26ffde8c1ddb48c8e14f599aaf5bfa84ac11504cfa247d6211ba4b');
+}
 
 exports.getSignUpPage = (req, res, next) => {
     res.sendFile(path.join(rootDir, 'views', 'signup.html'));
@@ -48,12 +53,13 @@ exports.postLoginData = (req, res, next) => {
             .compare(password, result.password)
             .then(passwordsMatch => {
                 if(passwordsMatch) {
-                    res.redirect('/user/daily-expenses'); // Just response `something`
+                    res.status(200).json( { message: "User login Successful" , success: true, token: generateAccessToken(result.id, result.name) }) // Just response `something`
                 } else {
                     res.status(401).json({ error: "Incorrect Password" });
                 }
             })
             .catch(err => {
+                console.log(err);
                 res.status(500).json( { error: "Internal Server Error" });
             })
     })
@@ -67,33 +73,52 @@ exports.getDailyExpenses = (req, res, next) => {
 }
 
 exports.getExpenses = (req, res, next) => {
-    Expense.findAll()
-        .then(expenses => {
-            res.json(expenses);
-            res.end();
-        })
-        .catch(err => console.log(err));
+    Expense.findAll( { 
+        where: {
+            userId: req.user.id
+        }
+    })
+    .then(expenses => {
+        res.json(expenses);
+        res.end();
+    })
+    .catch(err => console.log(err));
 }
 
 exports.postExpenses = (req, res, next) => {
+    const token = req.header('Authorization');
     const { amount, description, category } = req.body;
+    const userDetails = jwt.verify(token, '960205f013958a9fd80d704a02d18b599fd390c84f508fbcdbdc9de42a3248597f7832fdbf26ffde8c1ddb48c8e14f599aaf5bfa84ac11504cfa247d6211ba4b');
 
-    Expense.create( { amount, description, category })
+    const user = User.findByPk(userDetails.userId).then(user=> {
+        user.createExpense( { amount, description, category })
         .then(result => {
             console.log('Created Expense on Database');
             res.redirect('/user/expenses');
         })
         .catch(err => console.log(err));
+    })
 }
 
 exports.postDeleteExpense = (req, res, next) => {
-    const id = req.body.id;
-
-    Expense.destroy({
-        where: {
-            id: id
-        }
-    })
-    .then(res.redirect('/user/daily-expenses'))
-    .catch(error => res.status(500).json( {error: "Internal Server Error" }));
+    try {
+        const token = req.header('Authorization');
+        const userDetails = jwt.verify(token, '960205f013958a9fd80d704a02d18b599fd390c84f508fbcdbdc9de42a3248597f7832fdbf26ffde8c1ddb48c8e14f599aaf5bfa84ac11504cfa247d6211ba4b');
+        const userId = userDetails.userId;
+        const expenseId = req.body.id;
+        Expense.destroy({
+            where: {
+                userId: userId,
+                id: expenseId
+            }
+        })
+        .then(res.redirect('/user/daily-expenses'))
+        .catch(err => {
+            console.log(err);
+            res.status(500).json( {error: "Internal Server Error" });
+        })
+    } catch(err) {
+        console.log(err);
+        res.status(401).json( { error: "Operation Not Allowed" });
+    }
 }
