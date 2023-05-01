@@ -6,8 +6,10 @@ const rootDir = require('../util/path');
 const User = require('../models/user');
 const Expense = require('../models/expense');
 
+require('dotenv').config();
+
 function generateAccessToken(id, name) {
-    return jwt.sign( { userId: id, name: name } , '960205f013958a9fd80d704a02d18b599fd390c84f508fbcdbdc9de42a3248597f7832fdbf26ffde8c1ddb48c8e14f599aaf5bfa84ac11504cfa247d6211ba4b');
+    return jwt.sign( { userId: id, name: name } , process.env.TOKEN_SECRET);
 }
 
 exports.getSignUpPage = (req, res, next) => {
@@ -88,9 +90,10 @@ exports.getExpenses = (req, res, next) => {
 exports.postExpenses = (req, res, next) => {
     const token = req.header('Authorization');
     const { amount, description, category } = req.body;
-    const userDetails = jwt.verify(token, '960205f013958a9fd80d704a02d18b599fd390c84f508fbcdbdc9de42a3248597f7832fdbf26ffde8c1ddb48c8e14f599aaf5bfa84ac11504cfa247d6211ba4b');
+    const userDetails = jwt.verify(token, process.env.TOKEN_SECRET);
 
-    const user = User.findByPk(userDetails.userId).then(user=> {
+    User.findByPk(userDetails.userId)
+    .then(user=> {
         user.createExpense( { amount, description, category })
         .then(result => {
             console.log('Created Expense on Database');
@@ -103,9 +106,9 @@ exports.postExpenses = (req, res, next) => {
 exports.postDeleteExpense = (req, res, next) => {
     try {
         const token = req.header('Authorization');
-        const userDetails = jwt.verify(token, '960205f013958a9fd80d704a02d18b599fd390c84f508fbcdbdc9de42a3248597f7832fdbf26ffde8c1ddb48c8e14f599aaf5bfa84ac11504cfa247d6211ba4b');
+        const userDetails = jwt.verify(token, process.env.TOKEN_SECRET);
         const userId = userDetails.userId;
-        const expenseId = req.body.id;
+        const expenseId = req.body.id;  
         Expense.destroy({
             where: {
                 userId: userId,
