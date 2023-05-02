@@ -38,8 +38,20 @@
                     </select>
                 </div>
 
-                <button type="submit" class="btn btn-info">Submit</button>
-                <button class="btn btn-info" id="rzp-button1">Buy Premium</button>
+                <div class="row">
+                    <div class="col">
+                        <button type="submit" class="btn btn-info">Submit</button>
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-info" id="rzp-button1">Buy Premium</button>
+                    </div>
+                    <div class="col">
+                        <p class="btn" id="premiumText"></p>
+                    </div>
+                    <div class="col">
+                        <button class="btn btn-info" id="leaderboard-button">Show LeaderBoard</button>
+                    </div>
+                </div>
                 <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
             </form>
             <div class="mb-3">
@@ -62,6 +74,21 @@
 
             </tbody>
         </table>
+
+        <div id="leaderboard-section" style="display: none;">
+            <h3 class="text-center">LeaderBoard</h3>
+            <table class="table">
+                <thead class="thead">
+                    <tr>
+                        <th scope="col">Name</th>
+                        <th scope="col">Total Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="tbody-leaderboard">
+
+                </tbody>
+            </table>
+        </div>
     </div>
 
     
@@ -70,6 +97,70 @@
     <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
 
     <script>
+        // Show LeaderBoard Functionconst showLeaderBoardButton = document.querySelector('#leaderboard-button');
+
+        const leaderboardSection = document.querySelector('#leaderboard-section');
+        const leaderboardBody = document.querySelector('#tbody-leaderboard');
+        let isVisible = false
+
+        document.querySelector('#leaderboard-button').addEventListener('click', async (e) => {
+            e.preventDefault();
+            await axios.post('http://localhost:3000/premium/leaderboard', {}, {
+                headers: {
+                    "Authorization": token
+                }
+            })
+            .then(leaderboard => {
+                leaderboardBody.innerHTML = '';
+                Object.keys(leaderboard.data).forEach(value => {
+
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = '';
+                    const tdName = document.createElement('td');
+                    tdName.textContent = value;
+
+                    const tdAmount = document.createElement('td');
+                    tdAmount.textContent = leaderboard.data[value];
+
+                    tr.appendChild(tdName);
+                    tr.appendChild(tdAmount);
+
+                    leaderboardBody.appendChild(tr);
+                });
+
+                
+                if(isVisible) {
+                    leaderboardSection.style.display = 'none';
+                } else {
+                    leaderboardSection.style.display = 'block'
+                }
+                isVisible = !isVisible;
+            })
+            .catch(err => console.log(err));
+        })
+
+        // Check if the use is already a existing Premium user.?
+        const token = localStorage.getItem('token');
+        async function hideOrNot () {
+            await axios.post('http://localhost:3000/purchase/ispremium', null, {
+                headers: {
+                    "Authorization" : token
+                }
+            })
+            .then(result => {
+                if(result.data.isPremiumUser) {
+                    const rzpButton = document.getElementById('rzp-button1');
+                    rzpButton.style.display = 'none';
+                    document.getElementById('premiumText').textContent = 'You are a Premium User';
+                    document.getElementById('premiumText').style.fontWeight = 'bold';
+
+                }
+                
+            })
+            .catch(err => console.log(err));
+        }
+
+        hideOrNot();
 
         const rzpButton = document.getElementById("rzp-button1");
         rzpButton.addEventListener('click', async (e) => {
@@ -103,6 +194,7 @@
                     }).then((res) => {
                         console.log(res);
                         alert('You are a Premium user');
+                        window.location.href = 'http://localhost:3000/user/daily-expenses'
                     }).catch((error) => console.log(error));
 
                     
