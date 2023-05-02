@@ -61,35 +61,10 @@ exports.updateTransactionStatus = async (req, res, next) => {
             console.log(err);
         }
     }
-    //     try {
-    //         const { order_id , payment_id } = req.body;
-    //         Order.update( {
-    //             paymentId: payment_id, 
-    //             status: 'success'
-    //         }, {
-    //             where: {
-    //                 orderId: order_id
-    //             }
-    //         })
-    //         .then(() => {
-    //             req.user.update( {
-    //                 isPremiumUser: true
-    //             }, {
-    //                 where: {
-    //                     id: req.user.id
-    //                 }
-    //             })
-    //             .catch(err => {
-    //                 console.log(err);
-    //             })
-    //         })
-    //         .catch(err => {
-    //             console.log(err);
-    //             res.status(500).json({message: 'Database Updation Failed'});
-    //         })
-    //     } catch(err) {
-    //         console.log(err);
-    //     }
-    // }
     
 }
+
+exports.isPremium = (req, res, next) => {
+    res.status(200).json( { isPremiumUser: req.user.isPremiumUser } );
+}
+

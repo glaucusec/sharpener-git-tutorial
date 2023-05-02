@@ -10,4 +10,6 @@ router.post('/premium', middleware.authenticate ,purchaseController.purchasePrem
 
 router.post('/updatetransactionstatus', middleware.authenticate ,purchaseController.updateTransactionStatus);
 
+router.post('/ispremium', middleware.authenticate, purchaseController.isPremium);
+
 module.exports = router;
