@@ -112,15 +112,15 @@
             })
             .then(leaderboard => {
                 leaderboardBody.innerHTML = '';
-                Object.keys(leaderboard.data).forEach(value => {
+                leaderboard.data.forEach(obj => {
 
                     const tr = document.createElement('tr');
                     tr.innerHTML = '';
                     const tdName = document.createElement('td');
-                    tdName.textContent = value;
+                    tdName.textContent = obj.totalAmount;
 
                     const tdAmount = document.createElement('td');
-                    tdAmount.textContent = leaderboard.data[value];
+                    tdAmount.textContent = obj.user['name'];
 
                     tr.appendChild(tdName);
                     tr.appendChild(tdAmount);
