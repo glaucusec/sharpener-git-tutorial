@@ -22,6 +22,9 @@ const User = sequelize.define('user', {
         type: Sequelize.TEXT,
         allowNull: false
     },
+    totalAmount: {
+        type: Sequelize.INTEGER
+    },
     isPremiumUser: Sequelize.BOOLEAN
 }, {
     timestamps: false

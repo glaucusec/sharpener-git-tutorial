@@ -3,21 +3,11 @@ const Expense = require('../models/expense');
 const sequelize = require('../util/database');
 
 exports.leaderBoard = async (req, res, next) => {
-    await Expense.findAll( {
-        attributes: [
-            [sequelize.fn('sum', sequelize.col('amount')), 'totalAmount'],
-        ],
-        include: [{
-            model: User,
-            attributes: ['name'],
-        }],
-        group: ['User.id'],
-        order:[[sequelize.col('totalAmount'), 'DESC']]
+    await User.findAll({
+        attributes: ['name', 'totalAmount'],
+        order: [[sequelize.col('totalAmount'), 'DESC']]
     })
-    .then(result => {
-        res.status(200).json(result);
-    })
-    .catch(err => res.status(500).json(err));
+    .then(result => res.status(200).json(result));
 }
 
 // #1
@@ -82,3 +72,21 @@ exports.leaderBoard = async (req, res, next) => {
 //     })
 //     .catch(err => res.status(500).json(err));
 
+// #3
+// exports.leaderBoard = async (req, res, next) => {
+//     await Expense.findAll( {
+//         attributes: [
+//             [sequelize.fn('sum', sequelize.col('amount')), 'totalAmount'],
+//         ],
+//         include: [{
+//             model: User,
+//             attributes: ['name'],
+//         }],
+//         group: ['User.id'],
+//         order:[[sequelize.col('totalAmount'), 'DESC']]
+//     })
+//     .then(result => {
+//         res.status(200).json(result);
+//     })
+//     .catch(err => res.status(500).json(err));
+// }

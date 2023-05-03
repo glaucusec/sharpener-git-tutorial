@@ -112,21 +112,21 @@
             })
             .then(leaderboard => {
                 leaderboardBody.innerHTML = '';
-                leaderboard.data.forEach(obj => {
-
+                leaderboard.data.forEach(user => {
                     const tr = document.createElement('tr');
                     tr.innerHTML = '';
                     const tdName = document.createElement('td');
-                    tdName.textContent = obj.totalAmount;
+                    tdName.textContent = user.name;
 
                     const tdAmount = document.createElement('td');
-                    tdAmount.textContent = obj.user['name'];
+                    tdAmount.textContent = user.totalAmount;
 
                     tr.appendChild(tdName);
                     tr.appendChild(tdAmount);
 
                     leaderboardBody.appendChild(tr);
                 });
+
 
                 
                 if(isVisible) {
