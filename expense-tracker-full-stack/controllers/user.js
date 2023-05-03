@@ -36,6 +36,7 @@ exports.postSignUpData = (req, res, next) => {
                 res.send(result);
             })
             .catch(err => {
+                console.log(err);
                 res.status(403).json({ error: 'Email is already taken' });
             })
         })
@@ -94,13 +95,37 @@ exports.postExpenses = (req, res, next) => {
 
     User.findByPk(userDetails.userId)
     .then(user=> {
-        user.createExpense( { amount, description, category })
+        return user.createExpense( { amount, description, category })
         .then(result => {
             console.log('Created Expense on Database');
-            res.redirect('/user/expenses');
+            return User.findAll({
+                attributes: ['totalAmount'],
+                where: {
+                    id: userDetails.userId
+                }
+            });
+        })
+        .then(result => {
+            const curr_totalAmount = result[0].dataValues['totalAmount'];
+            return curr_totalAmount
+        })
+        .then(curr_totalAmount => {
+            const fin_totalAmount = curr_totalAmount + parseInt(amount);
+            User.update( {
+                totalAmount: fin_totalAmount
+            }, {
+                where: {
+                    id: userDetails.userId
+                }
+            })
+        })
+        .then(() => {
+            console.log('Total amount updated successfully')
+            res.redirect('/user/expenses')
         })
         .catch(err => console.log(err));
     })
+    .catch(err => console.log(err));
 }
 
 exports.postDeleteExpense = (req, res, next) => {
