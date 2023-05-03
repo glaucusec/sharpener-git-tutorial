@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 const rootDir = require('../util/path');
 const User = require('../models/user');
 const Expense = require('../models/expense');
+const sequelize = require('../util/database');
 
 require('dotenv').config();
 
@@ -36,7 +37,6 @@ exports.postSignUpData = (req, res, next) => {
                 res.send(result);
             })
             .catch(err => {
-                console.log(err);
                 res.status(403).json({ error: 'Email is already taken' });
             })
         })
@@ -88,64 +88,116 @@ exports.getExpenses = (req, res, next) => {
     .catch(err => console.log(err));
 }
 
-exports.postExpenses = (req, res, next) => {
+exports.postExpenses = async (req, res, next) => {
+    const t = await sequelize.transaction();
     const token = req.header('Authorization');
     const { amount, description, category } = req.body;
     const userDetails = jwt.verify(token, process.env.TOKEN_SECRET);
 
-    User.findByPk(userDetails.userId)
-    .then(user=> {
-        return user.createExpense( { amount, description, category })
-        .then(result => {
-            console.log('Created Expense on Database');
-            return User.findAll({
-                attributes: ['totalAmount'],
-                where: {
-                    id: userDetails.userId
-                }
-            });
-        })
-        .then(result => {
-            const curr_totalAmount = result[0].dataValues['totalAmount'];
-            return curr_totalAmount
-        })
-        .then(curr_totalAmount => {
-            const fin_totalAmount = curr_totalAmount + parseInt(amount);
-            User.update( {
-                totalAmount: fin_totalAmount
-            }, {
-                where: {
-                    id: userDetails.userId
-                }
-            })
-        })
-        .then(() => {
-            console.log('Total amount updated successfully')
-            res.redirect('/user/expenses')
-        })
-        .catch(err => console.log(err));
-    })
-    .catch(err => console.log(err));
-}
 
-exports.postDeleteExpense = (req, res, next) => {
+    try {
+        const user = await User.findByPk(userDetails.userId);
+        const expense = await user.createExpense( { amount, description, category }, { transaction: t})
+        console.log('Created Expense on database');
+
+        const result = await User.findAll( { 
+            attributes: ['totalAmount'], 
+            where: { id: userDetails.userId } 
+        });
+
+        const curr_totalAmount = result[0].dataValues['totalAmount'];
+        const fin_totalAmount = curr_totalAmount + parseInt(amount);
+
+        await User.update(
+            { totalAmount: fin_totalAmount },
+            { where: { id: userDetails.userId }, transaction: t }
+        )
+
+        await t.commit();
+        console.log('Total amount updated successfully')
+        res.redirect('/user/expenses')
+    } catch (err) {
+        t.rollback();
+        console.log(err)
+    }
+}
+   
+// exports.postExpenses = async (req, res, next) => {
+//     const t = await sequelize.transaction();
+//     const token = req.header('Authorization');
+//     const { amount, description, category } = req.body;
+//     const userDetails = jwt.verify(token, process.env.TOKEN_SECRET);
+
+//     User.findByPk(userDetails.userId)
+//     .then(user=> {
+//         user.createExpense( { amount, description, category }, { transaction: t})
+//         .then(result => {
+//             console.log('Created Expense on Database');
+//             User.findAll({
+//                 attributes: ['totalAmount'],
+//                 where: {
+//                     id: userDetails.userId
+//                 }
+//             })
+//             .then(result => {
+//                 const curr_totalAmount = result[0].dataValues['totalAmount'];
+//                 const fin_totalAmount = curr_totalAmount + parseInt(amount);
+//                 User.update(
+//                     { totalAmount: fin_totalAmount },
+//                     { whee: { id: userDetails.userId }, transaction: t }
+//                 )
+//                 .then(async () => {
+//                     await t.commit();
+//                     console.log('Total amount updated successfully')
+//                     res.redirect('/user/expenses')
+//                 })
+//                 .catch(async (err) => {
+//                     await t.rollback();
+//                     console.log(err)
+//                 });
+//             })
+//             .catch(err => console.log(err));
+//         })
+//         .catch(err => {
+//             t.rollback();
+//             console.log(err)
+//         });
+//     })
+//     .catch(err => console.log(err))
+// }
+        
+
+exports.postDeleteExpense = async (req, res, next) => {
+    const t = await sequelize.transaction();
     try {
         const token = req.header('Authorization');
         const userDetails = jwt.verify(token, process.env.TOKEN_SECRET);
         const userId = userDetails.userId;
         const expenseId = req.body.id;  
-        Expense.destroy({
-            where: {
-                userId: userId,
-                id: expenseId
-            }
+
+        const expenseAmount = await Expense.findByPk(expenseId, {
+            attributes: ['amount']
         })
-        .then(res.redirect('/user/daily-expenses'))
-        .catch(err => {
-            console.log(err);
-            res.status(500).json( {error: "Internal Server Error" });
+
+        const totalAmount = await User.findByPk(userId, {
+            attributes: ['totalAmount']
         })
+
+        const newExpenseAmount = totalAmount.dataValues['totalAmount'] - expenseAmount.dataValues['amount']
+        
+        await User.update( 
+            { totalAmount: newExpenseAmount },
+            { where: { id: userId }, transaction: t } 
+        )
+        await Expense.destroy({
+            where: { userId: userId, id: expenseId }, transaction: t
+        })
+
+        await t.commit();
+        res.redirect('/user/daily-expenses');
+
     } catch(err) {
+        t.rollback();
         console.log(err);
         res.status(401).json( { error: "Operation Not Allowed" });
     }
