@@ -1,40 +1,141 @@
 const path = require('path')
 const rootDir = require('../util/path')
 const SibApiV3Sdk = require('sib-api-v3-sdk')
-const { userInfo } = require('os')
+const {v4: uuidv4 } = require('uuid');
+const bcrypt = require('bcrypt');
+
+const User = require('../models/user');
+const ForgotPasswordRequest = require('../models/forgot-password');
+const sequelize = require('../util/database');
 
 require('dotenv').config()
+
+exports.getResetPassword = async (req, res, next) => {
+    UUID = req.params.id
+    const UData = await ForgotPasswordRequest.findOne({
+        attributes: ['isActive', 'userId'],
+        where: {
+            id: UUID
+        }
+    })
+    if( UData.dataValues['isActive'] ){
+        res.sendFile(path.join(rootDir, 'views', 'reset-password.html'));
+    }
+}
+
+exports.postResetPassword = async (req, res, next) => {
+    const t = await sequelize.transaction();
+    const UUID = req.body.id;
+    const saltrounds = 10;
+    const password1 = req.body.password1;
+    const password2 = req.body.password2;
+    
+
+    if( !password1 === password2 ){ 
+        return res.status(403).json( {'message': 'Passwords Does Not Match' } ) 
+    }
+    try {
+        const user = await ForgotPasswordRequest.findOne( { attributes: ['isActive', 'userId' ], where: { id: UUID } } )
+        if(!user['isActive']) { 
+            res.status(400).json( { 'message': 'Invalid URL' } )
+        }
+        
+        const hash = await bcrypt.hash(password1, saltrounds);
+        await User.update( { password: hash}, {where: { id: user['userId'] } , transaction: t } )
+        console.log("Password Updated on Database");
+        
+        await ForgotPasswordRequest.update({ isActive: false }, { where: { id: UUID }, transaction: t } )
+        console.log('UUID is deactivated');
+
+        await t.commit();
+        res.status(201).json( { 'message': 'Password Updated Successfully ' } )
+    } catch(err) {
+        await t.rollback();
+        console.log(err);
+    }
+}
 
 exports.getForgotPassword = (req, res, next) => {
     res.sendFile(path.join(rootDir, 'views', 'forgot-password.html'));
 }
 
-exports.postForgotPassword = (req, res, next) => {
-    const SibApiV3Sdk = require('sib-api-v3-sdk');
-    let defaultClient = SibApiV3Sdk.ApiClient.instance;
+exports.postForgotPassword = async (req, res, next) => {
+    const user_email = req.body.email;
 
-    let apiKey = defaultClient.authentications['api-key'];
-    apiKey.apiKey = process.env.EMAILTOKEN;
+    User.findOne( {
+        attributes: ['id', 'email'],
+        where: {
+            email: user_email
+        }
+    }).then(async (user) => {
+        if(!user) {
+            res.status(404).json( { 'message': 'User with Email does not Exists' } );
+        } else {
+            const UUID = uuidv4();
+            ForgotPasswordRequest.create({ id: UUID, isActive: true, userId: user.dataValues['id'] })
+            .then(() => {
+                const SibApiV3Sdk = require('sib-api-v3-sdk');
+                let defaultClient = SibApiV3Sdk.ApiClient.instance;
 
-    let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+                let apiKey = defaultClient.authentications['api-key'];
+                apiKey.apiKey = process.env.EMAILTOKEN;
 
-    let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+                let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
 
-    sendSmtpEmail.subject = "My {{params.subject}}";
-    sendSmtpEmail.htmlContent = "<html><body><h1>This is my first transactional email {{params.parameter}}</h1></body></html>";
-    sendSmtpEmail.sender = {"name":"John Doe","email":"example@example.com"};
-    sendSmtpEmail.to = [{"email":"finono9256@syinxun.com","name":"Jane Doe"}];
-    sendSmtpEmail.replyTo = {"email":"replyto@domain.com","name":"John Doe"};
-    sendSmtpEmail.headers = {"Some-Custom-Name":"unique-id-1234"};
-    sendSmtpEmail.params = {"parameter":"My param value","subject":"New Subject"};
+                let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
-    apiInstance.sendTransacEmail(sendSmtpEmail)
-        .then((data) => {
-            console.log('API called successfully. Returned data: ' + JSON.stringify(data));
-            res.status(200).json(data)
-        })
-        .catch(err => {
-            console.log(err);
-            res.status(500).json({messageId: "Internal Server Error"});
-        })
+                sendSmtpEmail.subject = "{{params.subject}}";
+                sendSmtpEmail.htmlContent = "<html><body><h1>Click on <a target='_blank' href='http://localhost:3000/password/reset-password/{{params.parameter}}'>this link</a>to Reset the Password</h1></body></html>";
+                sendSmtpEmail.sender = {"name":"Expense Tracker","email":"expensetracker@gmail.com"};
+                sendSmtpEmail.to = [{"email": user_email,"name":"Sharpener Test"}];
+                sendSmtpEmail.headers = {"Some-Custom-Name":"unique-id-1234"};
+                sendSmtpEmail.params = {"parameter":UUID ,"subject":"Reset Password"};
+
+                apiInstance.sendTransacEmail(sendSmtpEmail)
+                .then((data) => {
+                    console.log('API called successfully. Returned data: ' + JSON.stringify(data));
+                    res.status(200).json(data)
+                })
+                .catch(err => {
+                    console.log(err);
+                    res.status(500).json({messageId: "Internal Server Error"});
+                })
+            })
+            .catch(err => {
+                console.log(err);
+                res.status(500).json({'message': 'Internal Server Error: @postForgotPassword'})
+            }); 
+        }
+    })
+    .catch(err => console.log(err));
 }
+
+        
+
+
+    // const SibApiV3Sdk = require('sib-api-v3-sdk');
+    // let defaultClient = SibApiV3Sdk.ApiClient.instance;
+
+    // let apiKey = defaultClient.authentications['api-key'];
+    // apiKey.apiKey = process.env.EMAILTOKEN;
+
+    // let apiInstance = new SibApiV3Sdk.TransactionalEmailsApi();
+
+    // let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
+
+    // sendSmtpEmail.subject = "{{params.subject}}";
+    // sendSmtpEmail.htmlContent = "<html><body><h1>Click on <a target='_blank' href='{{params.parameter}}'>this link</a>to Reset the Password</h1></body></html>";
+    // sendSmtpEmail.sender = {"name":"Expense Tracker","email":"expensetracker@gmail.com"};
+    // sendSmtpEmail.to = [{"email": user_email,"name":"Sharpener Test"}];
+    // sendSmtpEmail.headers = {"Some-Custom-Name":"unique-id-1234"};
+    // sendSmtpEmail.params = {"parameter":"https://google.com","subject":"Reset Password"};
+
+    // apiInstance.sendTransacEmail(sendSmtpEmail)
+    //     .then((data) => {
+    //         console.log('API called successfully. Returned data: ' + JSON.stringify(data));
+    //         res.status(200).json(data)
+    //     })
+    //     .catch(err => {
+    //         console.log(err);
+    //         res.status(500).json({messageId: "Internal Server Error"});
+    //     })
