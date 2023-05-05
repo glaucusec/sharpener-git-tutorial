@@ -94,7 +94,6 @@ exports.postExpenses = async (req, res, next) => {
     const { amount, description, category } = req.body;
     const userDetails = jwt.verify(token, process.env.TOKEN_SECRET);
 
-
     try {
         const user = await User.findByPk(userDetails.userId);
         const expense = await user.createExpense( { amount, description, category }, { transaction: t})

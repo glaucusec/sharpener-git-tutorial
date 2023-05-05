@@ -1,6 +1,41 @@
 const User = require('../models/user');
 const Expense = require('../models/expense');
+const FilesUploaded = require('../models/filesuploaded');
 const sequelize = require('../util/database');
+
+require('dotenv').config();
+
+const UserServices = require('../services/userservices')
+const S3Services = require('../services/s3services');
+
+exports.downloadReport = async (req, res, next) => {
+    try {
+        const expenses = await UserServices.getExpenses(req);
+        const stringifiedExpenses = JSON.stringify(expenses);
+    
+        const userId = req.user.id;
+        const fileName = `expense${userId}/${new Date()}.txt`;
+        
+        const fileURL = await S3Services.uploadToS3(stringifiedExpenses, fileName);
+        FilesUploaded.create ({ fileURL: fileURL, userId: userId })
+        res.status(200).json({ fileURL: fileURL, success: true})
+
+    } catch(err) {
+        console.log(err);
+        res.status(200).json( { fileURL : '', success:false, err: err})
+    }
+}
+
+exports.fileUrls = async (req, res, next) => {
+    const userId = req.user.id
+    try {
+        const prevFiles = await FilesUploaded.findAll( { where: { userId: userId } })
+        res.status(200).json(JSON.stringify(prevFiles))
+    } catch(err) {
+        res.status(404).json({'message': 'Error in the FIlesUrl()', success: false});
+    }
+    
+}
 
 exports.leaderBoard = async (req, res, next) => {
     await User.findAll({
@@ -8,6 +43,16 @@ exports.leaderBoard = async (req, res, next) => {
         order: [[sequelize.col('totalAmount'), 'DESC']]
     })
     .then(result => res.status(200).json(result));
+}
+
+
+exports.isPremium = (req, res, next) => {
+    if(req.user.isPremiumUser) {
+        res.status(200).json({'isPremium': true})
+    } else {
+        res.status(401).json({ 'isPremium': false })
+    }
+    
 }
 
 // #1

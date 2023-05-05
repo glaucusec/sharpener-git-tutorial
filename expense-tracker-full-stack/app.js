@@ -11,8 +11,11 @@ User = require('./models/user');
 Expense = require('./models/expense');
 Order = require('./models/order');
 ForgotPasswordRequest = require('./models/forgot-password')
+filesUploaded = require('./models/filesuploaded');
 
 const app = express();
+
+app.use('/', express.static(__dirname + '/public'));
 
 app.use(bodyParser.json())
 
@@ -29,6 +32,9 @@ Order.belongsTo(User);
 
 User.hasMany(ForgotPasswordRequest);
 ForgotPasswordRequest.belongsTo(User);
+
+User.hasMany(filesUploaded);
+filesUploaded.belongsTo(User);
  
 sequelize
     // .sync({force:true})

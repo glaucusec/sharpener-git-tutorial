@@ -8,4 +8,10 @@ const premiumRouter = require('../controllers/premium');
 
 router.post('/leaderboard', premiumRouter.leaderBoard);
 
+router.post('/ispremium', middleware.authenticate ,premiumRouter.isPremium);
+
+router.get('/download-report', middleware.authenticate, premiumRouter.downloadReport);
+
+router.post('/fileurls', middleware.authenticate, premiumRouter.fileUrls);
+
 module.exports = router;
