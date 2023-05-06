@@ -27,13 +27,33 @@ exports.downloadReport = async (req, res, next) => {
 }
 
 exports.fileUrls = async (req, res, next) => {
-    const userId = req.user.id
-    try {
-        const prevFiles = await FilesUploaded.findAll( { where: { userId: userId } })
-        res.status(200).json(JSON.stringify(prevFiles))
-    } catch(err) {
-        res.status(404).json({'message': 'Error in the FIlesUrl()', success: false});
+    const userId = req.user.id;
+    const page = parseInt(req.query.page);
+    const limit = 5;
+    
+    const startIndex = (page - 1) * limit
+    const endIndex = page * limit;
+
+    const results = {}
+    const length = await FilesUploaded.count({where:{userId:userId}});
+    
+    if (endIndex < length) {
+        results.next = page + 1
     }
+
+    if(startIndex > 0) {
+        results.previous = page - 1
+    }
+
+    results.results = await FilesUploaded.findAll( {
+        attributes: ['fileURL'],
+        limit: limit,
+        offset: startIndex,
+        where: { userId: userId }
+    })
+
+    results.current = page;
+    res.json(results);
     
 }
 

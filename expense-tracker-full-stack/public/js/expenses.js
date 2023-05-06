@@ -1,30 +1,87 @@
 
     // fetching the old report fileURLs and showing it to the screen.
-    async function fetcholdUrls() {
-        const token = localStorage.getItem('token');
-        try {
-            let prevFiles = await axios.post('http://localhost:3000/premium/fileurls', {}, {
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': token
-                }
+
+    function Pagination(n, p, c) {
+        const pagination = document.querySelector('.pagination');
+        pagination.innerHTML = '';
+        if(p) {
+            const ulElement = document.createElement('li');
+            ulElement.classList.add('page-item', 'page-link');
+            ulElement.textContent = p;
+            ulElement.addEventListener('click', () => {
+                getoldURLs(p);
             })
-            const tbody = document.querySelector('#tbody-fileurls');
-            JSON.parse(prevFiles.data).forEach((ele) => {
-                const td = document.createElement('td');
-                const tr = document.createElement('tr');
-
-                const urlparts = ele.fileURL.split('/');
-                let date = decodeURIComponent(urlparts[urlparts.length - 1]);
-                
-                td.innerHTML = `<a href="${ele.fileURL}">${date.split('(')[0]}</a>`
-                tr.appendChild(td);
-
-                tbody.appendChild(tr);
-            });
-        } catch (err) {
-            console.log(err);
+            pagination.appendChild(ulElement);
         }
+
+        const ulElement = document.createElement('li');
+        ulElement.classList.add('page-item', 'active', 'page-link');
+        ulElement.textContent = c;
+        ulElement.addEventListener('click', () => {
+            getoldURLs(c);
+        })
+        pagination.appendChild(ulElement);
+
+        if(n) {
+            const ulElement = document.createElement('li');
+            ulElement.classList.add('page-item', 'page-link');
+            ulElement.textContent = n;
+            ulElement.addEventListener('click', () => {
+                getoldURLs(n);
+            })
+            pagination.appendChild(ulElement);
+        }
+    }
+
+    function listURLs(urls) {
+        const tbody = document.querySelector('#tbody-fileurls');
+        tbody.innerHTML = '';
+        urls.forEach(url => {
+            const tr = document.createElement('tr');
+            const td = document.createElement('td');
+            const urlparts = url.fileURL.split('/');
+            let date = decodeURIComponent(urlparts[urlparts.length - 1]);
+            td.innerHTML = `<a href="${url.fileURL}">${date.split('(')[0]}</a>`;
+            tr.appendChild(td);
+            tbody.appendChild(tr);
+        })
+    }
+
+    function getoldURLs(page) {
+        const token = localStorage.getItem('token');
+        axios.get(`http://localhost:3000/premium/fileurls?page=${page}`, {
+            headers: {
+                'Authorization': token
+            }
+        })
+        .then(result => {
+            listURLs(result.data.results);
+            Pagination(result.data.next, result.data.previous, result.data.current);
+        })
+
+        // try {
+        //     let prevFiles = await axios.post('http://localhost:3000/premium/fileurls', {}, {
+        //         headers: {
+        //             'Content-Type': 'application/json',
+        //             'Authorization': token
+        //         }
+        //     })
+        //     const tbody = document.querySelector('#tbody-fileurls');
+        //     JSON.parse(prevFiles.data).forEach((ele) => {
+        //         const td = document.createElement('td');
+        //         const tr = document.createElement('tr');
+
+        //         const urlparts = ele.fileURL.split('/');
+        //         let date = decodeURIComponent(urlparts[urlparts.length - 1]);
+                
+        //         td.innerHTML = `<a href="${ele.fileURL}">${date.split('(')[0]}</a>`
+        //         tr.appendChild(td);
+
+        //         tbody.appendChild(tr);
+        //     });
+        // } catch (err) {
+        //     console.log(err);
+        // }
     }
     
 
@@ -281,4 +338,5 @@
     }
 
     fetchExpenses();
-    fetcholdUrls();
+    // calling the getOldUrls with the default value of page 1
+    getoldURLs(1);

@@ -12,6 +12,6 @@ router.post('/ispremium', middleware.authenticate ,premiumRouter.isPremium);
 
 router.get('/download-report', middleware.authenticate, premiumRouter.downloadReport);
 
-router.post('/fileurls', middleware.authenticate, premiumRouter.fileUrls);
+router.get('/fileurls', middleware.authenticate, premiumRouter.fileUrls);
 
 module.exports = router;
