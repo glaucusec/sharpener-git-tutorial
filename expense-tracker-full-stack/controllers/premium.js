@@ -29,7 +29,7 @@ exports.downloadReport = async (req, res, next) => {
 exports.fileUrls = async (req, res, next) => {
     const userId = req.user.id;
     const page = parseInt(req.query.page);
-    const limit = 5;
+    const limit = parseInt(req.query.limit);
     
     const startIndex = (page - 1) * limit
     const endIndex = page * limit;

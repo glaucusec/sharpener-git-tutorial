@@ -1,5 +1,13 @@
 
     // fetching the old report fileURLs and showing it to the screen.
+    let page = 1;
+
+    const dropdown = document.getElementById('dropdown');
+    dropdown.addEventListener('change', handleDropdownChange);
+    function handleDropdownChange() {
+        const selectedValue = dropdown.value;
+        localStorage.setItem('limit', selectedValue);
+    }
 
     function Pagination(n, p, c) {
         const pagination = document.querySelector('.pagination');
@@ -48,8 +56,9 @@
     }
 
     function getoldURLs(page) {
+        const limit = parseInt(localStorage.getItem('limit'));
         const token = localStorage.getItem('token');
-        axios.get(`http://localhost:3000/premium/fileurls?page=${page}`, {
+        axios.get(`http://localhost:3000/premium/fileurls?page=${page}&limit=${limit}`, {
             headers: {
                 'Authorization': token
             }
@@ -339,4 +348,4 @@
 
     fetchExpenses();
     // calling the getOldUrls with the default value of page 1
-    getoldURLs(1);
+    getoldURLs(page);
