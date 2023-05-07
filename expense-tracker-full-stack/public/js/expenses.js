@@ -187,6 +187,7 @@
                 "Authorization" : token
             }
         })
+        
         let options = {
             "key": response.data.key_id, // Enter the Key ID generated from the Dashboard
             "amount": "50000", // Amount is in currency subunits. Default currency is INR. Hence, 50000 refers to 50000 paise
