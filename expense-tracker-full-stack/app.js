@@ -1,5 +1,10 @@
 const express = require('express');
 const bodyParser = require('body-parser');
+const helmet = require('helmet');
+const morgan = require('morgan');
+const fs = require('fs');
+const path = require('path');
+const cors = require('cors');
 
 const sequelize = require('./util/database');
 const userRoutes = require('./routes/user');
@@ -14,6 +19,38 @@ ForgotPasswordRequest = require('./models/forgot-password')
 filesUploaded = require('./models/filesuploaded');
 
 const app = express();
+
+app.use(
+    helmet({
+        contentSecurityPolicy: false, // disable the CSP middleware
+        referrerPolicy: true,
+        crossOriginEmbedderPolicy: false,
+        crossOriginResourcePolicy: {
+            allowOrigins: ['*']
+        },
+        contentSecurityPolicy: {
+            directives: {
+                defaultSrc: ['*'],
+                scriptSrc: ["* data: 'unsafe-eval' 'unsafe-inline' blob:"]
+            }
+        }
+    })
+)
+// app.use(helmet({
+//     contentSecurityPolicy: false, // disable the CSP middleware
+//     referrerPolicy: true, // disable the Referrer-Policy middleware
+//     crossOriginResourcePolicy: { 
+//         allowOrigins: ['*']
+//      }
+//   }));
+
+const accessLogStream = fs.createWriteStream(
+    path.join(__dirname, 'access.log'),
+    { flags: 'a' }
+);
+
+app.use(morgan('combined', { stream: accessLogStream}));
+  
 
 app.use('/', express.static(__dirname + '/public'));
 
