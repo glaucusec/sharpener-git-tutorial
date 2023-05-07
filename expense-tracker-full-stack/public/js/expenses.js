@@ -1,4 +1,9 @@
-
+    // Logout button 
+    document.querySelector('#logout').addEventListener('click', () => {
+        localStorage.removeItem('token');
+        alert('You are Logged Out. Login Again');
+        window.location = 'http://localhost:3000/user/login';
+    })
     // fetching the old report fileURLs and showing it to the screen.
     let page = 1;
 
