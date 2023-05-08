@@ -22,10 +22,6 @@ const app = express();
 
 app.use(cors());
 
-app.use((req, res) => {
-    console.log('This is the url -> ', req.url);
-})
-
 // app.use(
 //     helmet({
 //         contentSecurityPolicy: false, // disable the CSP middleware
