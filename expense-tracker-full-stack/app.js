@@ -20,22 +20,24 @@ filesUploaded = require('./models/filesuploaded');
 
 const app = express();
 
-app.use(
-    helmet({
-        contentSecurityPolicy: false, // disable the CSP middleware
-        referrerPolicy: true,
-        crossOriginEmbedderPolicy: false,
-        crossOriginResourcePolicy: {
-            allowOrigins: ['*']
-        },
-        contentSecurityPolicy: {
-            directives: {
-                defaultSrc: ['*'],
-                scriptSrc: ["* data: 'unsafe-eval' 'unsafe-inline' blob:"]
-            }
-        }
-    })
-)
+app.use(cors());
+
+// app.use(
+//     helmet({
+//         contentSecurityPolicy: false, // disable the CSP middleware
+//         referrerPolicy: true,
+//         crossOriginEmbedderPolicy: false,
+//         crossOriginResourcePolicy: {
+//             allowOrigins: ['*']
+//         },
+//         contentSecurityPolicy: {
+//             directives: {
+//                 defaultSrc: ['*'],
+//                 scriptSrc: ["* data: 'unsafe-eval' 'unsafe-inline' blob:"]
+//             }
+//         }
+//     })
+// )
 // app.use(helmet({
 //     contentSecurityPolicy: false, // disable the CSP middleware
 //     referrerPolicy: true, // disable the Referrer-Policy middleware
@@ -44,12 +46,12 @@ app.use(
 //      }
 //   }));
 
-const accessLogStream = fs.createWriteStream(
-    path.join(__dirname, 'access.log'),
-    { flags: 'a' }
-);
+// const accessLogStream = fs.createWriteStream(
+//     path.join(__dirname, 'access.log'),
+//     { flags: 'a' }
+// );
 
-app.use(morgan('combined', { stream: accessLogStream}));
+// app.use(morgan('combined', { stream: accessLogStream}));
   
 
 app.use('/', express.static(__dirname + '/public'));

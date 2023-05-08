@@ -85,7 +85,7 @@ exports.postForgotPassword = async (req, res, next) => {
                 let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
                 sendSmtpEmail.subject = "{{params.subject}}";
-                sendSmtpEmail.htmlContent = "<html><body><h1>Click on <a target='_blank' href='http://localhost:80/password/reset-password/{{params.parameter}}'>this link</a>to Reset the Password</h1></body></html>";
+                sendSmtpEmail.htmlContent = "<html><body><h1>Click on <a target='_blank' href='http://43.207.195.127:80/password/reset-password/{{params.parameter}}'>this link</a>to Reset the Password</h1></body></html>";
                 sendSmtpEmail.sender = {"name":"Expense Tracker","email":"expensetracker@gmail.com"};
                 sendSmtpEmail.to = [{"email": user_email,"name":"Sharpener Test"}];
                 sendSmtpEmail.headers = {"Some-Custom-Name":"unique-id-1234"};
