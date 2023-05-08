@@ -30,6 +30,13 @@ exports.fileUrls = async (req, res, next) => {
     const userId = req.user.id;
     const page = parseInt(req.query.page);
     const limit = parseInt(req.query.limit);
+
+    if (isNaN(page) || page < 1) {
+        page = 1;
+    }
+    if (isNaN(limit) || limit < 1) {
+        limit = 5; // set a default limit
+    }
     
     const startIndex = (page - 1) * limit
     const endIndex = page * limit;
