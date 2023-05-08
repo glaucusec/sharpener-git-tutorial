@@ -29,7 +29,7 @@ exports.downloadReport = async (req, res, next) => {
 exports.fileUrls = async (req, res, next) => {
     const userId = req.user.id;
     const page = parseInt(req.query.page);
-    const limit = parseInt(req.query.limit);
+    let limit = parseInt(req.query.limit);
 
     if (isNaN(page) || page < 1) {
         page = 1;
