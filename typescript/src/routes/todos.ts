@@ -1,7 +1,8 @@
 import { Router } from 'express';
 
 import Todo from '../models/todo';
-import { totalmem } from 'os';
+
+type RequestBody = { text: string }
 
 const todos: Todo[] = [];
 
@@ -12,9 +13,10 @@ router.get('/', (req, res, next) => {
 })
 
 router.post('/todo', (req, res, next) => {
+    const body = req.body as RequestBody;
     const newTodo: Todo = {
         id: new Date().toISOString(),
-        text: req.body.text
+        text: body.text
     }
 
     todos.push(newTodo);
