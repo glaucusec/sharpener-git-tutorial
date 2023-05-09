@@ -14,7 +14,7 @@ router.get('/login', userController.getLoginPage);
 
 router.post('/login', userController.postLoginData);
 
-router.get('/daily-expenses', userController.getDailyExpenses);
+router.get('/daily-expenses',userController.getDailyExpenses);
 
 router.get('/expenses', userAuthentication.authenticate, userController.getExpenses);
 
