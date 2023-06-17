@@ -2,6 +2,7 @@ const path = require('path');
 
 const express = require('express');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 const errorController = require('./controllers/error');
 const mongoConnect = require('./util/database').mongoConnect;
@@ -20,9 +21,9 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 app.use((req, res, next) => {
-    User.findById("648c00157d5e622c0aa43a49")
+    User.findById("648d563da1ae2b3cdfc26bce")
     .then(user => {
-        req.user = new User(user.name, user.email, user.cart, user._id); // here we are stroing a seqelize object
+        req.user = user; // here we are stroing a seqelize object
         next();          // rather than a json object. so we can use
                         // methods like destory() and etc..
     })
@@ -35,6 +36,24 @@ app.use(shopRoutes);
 app.use(errorController.get404);
 
 
-mongoConnect(() => {
-    app.listen(3000);
+mongoose
+.connect('mongodb+srv://abhishekbaiju:TZl4CriFAFXhAQTZ@cluster0.su1nhjr.mongodb.net/shop')
+.then(result => {
+    User.findOne().then(user => {
+        if(!user) {
+            const user = new User({
+                name: 'Max', 
+                email: 'max@test.com',
+                cart: {
+                    items: []
+                }
+            })
+            user.save();
+        }
+    })
+    console.log('Connected')
+    app.listen(3000)
+})
+.catch(err => {
+    console.log(err);
 })
