@@ -1,6 +1,7 @@
 const path = require('path');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const mongoose = require('mongoose');
 
 const rootDir = require('../util/path');
 const User = require('../models/user');
@@ -21,183 +22,134 @@ exports.getLoginPage = (req, res, next) => {
     res.sendFile(path.join(rootDir, 'views', 'login.html'));
 }
 
-exports.postSignUpData = (req, res, next) => {
+exports.postSignUpData = async (req, res, next) => {
     const { name, email, password } = req.body;
-
     const saltrounds = 10;
-    bcrypt
-        .hash(password, saltrounds)
-        .then(hash => {
-            User.create( {
-                name: name, 
-                email: email, 
-                password: hash
-            })
-            .then(result => {
-                res.send(result);
-            })
-            .catch(err => {
-                res.status(403).json({ error: 'Email is already taken' });
-            })
-        })
-        .catch(err => console.log(err));
+    try {
+        // check if the user exists?
+        const userExists = await User.findOne({ email: email})
+        if(userExists) { return res.status(403).json({ error: 'Email is already taken' } ) }
+        //  create the password hash and Create the NEW user.
+        const hash = await bcrypt.hash(password, saltrounds)
+        const userCreated = await User.create( { name: name, email: email, password: hash } )
+        if(userCreated) {
+            console.log('@Message: new user signed in.')
+            res.status(200).send({ userCreated: true })
+        }
+
+    } catch(e) {
+        console.log(e.message);
+    }
 }
 
-exports.postLoginData = (req, res, next) => {
+exports.postLoginData = async (req, res, next) => {
     const { email, password } = req.body;
 
-    User.findOne({
-        where: {
-            email: email
+    try {
+        // check for user exists or not!
+        const userExists = await User.findOne( { email: email } )
+        if(!userExists) { return res.status(404).json( { error: 'User not found' } ) }
+        // check password hash
+        const passwordsMatch = await bcrypt.compare(password, userExists.password)
+        if(!passwordsMatch) { 
+            return res.status(403).json( { error: 'Password Mismatch' } )
+        } else {
+            const id = userExists._id.toString();
+            const name = userExists.name;
+            res.status(200).json({ 
+                message: "User login Successful", 
+                success: true, 
+                token: generateAccessToken(id, name)
+            })
         }
-    })
-    .then(result => {
-        bcrypt
-            .compare(password, result.password)
-            .then(passwordsMatch => {
-                if(passwordsMatch) {
-                    res.status(200).json( { message: "User login Successful" , success: true, token: generateAccessToken(result.id, result.name) }) // Just response `something`
-                } else {
-                    res.status(401).json({ error: "Incorrect Password" });
-                }
-            })
-            .catch(err => {
-                console.log(err);
-                res.status(500).json( { error: "Internal Server Error" });
-            })
-    })
-    .catch(err => {
-        res.status(403).json( {error: "User not found"});
-    });
+    } catch (e) {
+        console.log(e.message);
+        res.status(500).json({ error: 'Internal Server Error' })
+    }
 }
 
 exports.getDailyExpenses = (req, res, next) => {
     res.sendFile(path.join(rootDir, 'views', 'expenses.html'))
 }
 
-exports.getExpenses = (req, res, next) => {
-    Expense.findAll( { 
-        where: {
-            userId: req.user.id
-        }
-    })
-    .then(expenses => {
-        res.json(expenses);
-        res.end();
-    })
-    .catch(err => console.log(err));
+exports.getExpenses = async (req, res, next) => {
+    try {
+        const expenses = await Expense.find({userId: req.user._id}).select('amount description category')
+        if(!expenses) { return res.status(404).json({ message: 'Expenses not found ' } )}
+        res.status(200).json(expenses)
+    } catch(e) {
+        console.log(e.message);
+        res.status(500).json({ error: 'Internal Server Error' })
+    }
 }
 
 exports.postExpenses = async (req, res, next) => {
-    const t = await sequelize.transaction();
+    
+    const { id, amount, description, category } = req.body;
     const token = req.header('Authorization');
-    const { amount, description, category } = req.body;
+
     const userDetails = jwt.verify(token, process.env.TOKEN_SECRET);
+    if(!userDetails) { return res.status(403).send({ message: 'Operation not allowed' }) }
+
+    const user = await User.findById(userDetails.userId)
+    let totalAmount = user.totalAmount;
 
     try {
-        const user = await User.findByPk(userDetails.userId);
-        const expense = await user.createExpense( { amount, description, category }, { transaction: t})
-        console.log('Created Expense on database');
+        if(id) {
+            console.log('@Message: ------- editing a expense -------');
+            const currExpense = await Expense.findById(id)
 
-        const result = await User.findAll( { 
-            attributes: ['totalAmount'], 
-            where: { id: userDetails.userId } 
-        });
+            user.totalAmount -= currExpense.amount
+            currExpense.amount = amount
+            user.totalAmount += currExpense.amount
 
-        const curr_totalAmount = result[0].dataValues['totalAmount'];
-        const fin_totalAmount = curr_totalAmount + parseInt(amount);
+            currExpense.description = description
+            currExpense.category = category
+            currExpense.save();
+            console.log('@Message: expense udpated.')
+            await user.save();
+            console.log(`@Message: totalAmount updated for ${user.name}`);
+            res.redirect('/user/expenses');
 
-        await User.update(
-            { totalAmount: fin_totalAmount },
-            { where: { id: userDetails.userId }, transaction: t }
-        )
-
-        await t.commit();
-        console.log('Total amount updated successfully')
-        res.redirect('/user/expenses')
-    } catch (err) {
-        t.rollback();
-        console.log(err)
+        } else {
+            console.log('@Message: ------- adding a new expense --------')
+            
+            const updatedAmount = totalAmount + Number(amount);
+            // create the expense
+            await Expense.create( { amount: amount, description: description, category: category, userId: user._id })
+            console.log(`@Message: expense created for ${user.name}`)
+            // update the totalamount
+            user.totalAmount = updatedAmount;
+            await user.save();
+    
+            console.log(`@Message: totalAmount updated for ${user.name}`);
+            res.redirect('/user/expenses');
+        }
+        
+    } catch (e) {
+        console.log(e);
+        return res.status(500).json('Internal Server Error')
     }
 }
    
-// exports.postExpenses = async (req, res, next) => {
-//     const t = await sequelize.transaction();
-//     const token = req.header('Authorization');
-//     const { amount, description, category } = req.body;
-//     const userDetails = jwt.verify(token, process.env.TOKEN_SECRET);
-
-//     User.findByPk(userDetails.userId)
-//     .then(user=> {
-//         user.createExpense( { amount, description, category }, { transaction: t})
-//         .then(result => {
-//             console.log('Created Expense on Database');
-//             User.findAll({
-//                 attributes: ['totalAmount'],
-//                 where: {
-//                     id: userDetails.userId
-//                 }
-//             })
-//             .then(result => {
-//                 const curr_totalAmount = result[0].dataValues['totalAmount'];
-//                 const fin_totalAmount = curr_totalAmount + parseInt(amount);
-//                 User.update(
-//                     { totalAmount: fin_totalAmount },
-//                     { whee: { id: userDetails.userId }, transaction: t }
-//                 )
-//                 .then(async () => {
-//                     await t.commit();
-//                     console.log('Total amount updated successfully')
-//                     res.redirect('/user/expenses')
-//                 })
-//                 .catch(async (err) => {
-//                     await t.rollback();
-//                     console.log(err)
-//                 });
-//             })
-//             .catch(err => console.log(err));
-//         })
-//         .catch(err => {
-//             t.rollback();
-//             console.log(err)
-//         });
-//     })
-//     .catch(err => console.log(err))
-// }
-        
 
 exports.postDeleteExpense = async (req, res, next) => {
-    const t = await sequelize.transaction();
+    const expenseId = req.body.id;
     try {
         const token = req.header('Authorization');
         const userDetails = jwt.verify(token, process.env.TOKEN_SECRET);
-        const userId = userDetails.userId;
-        const expenseId = req.body.id;  
-
-        const expenseAmount = await Expense.findByPk(expenseId, {
-            attributes: ['amount']
-        })
-
-        const totalAmount = await User.findByPk(userId, {
-            attributes: ['totalAmount']
-        })
-
-        const newExpenseAmount = totalAmount.dataValues['totalAmount'] - expenseAmount.dataValues['amount']
+        const user = await User.findById(userDetails.userId)
+        const currExpense = await Expense.findById(expenseId)
         
-        await User.update( 
-            { totalAmount: newExpenseAmount },
-            { where: { id: userId }, transaction: t } 
-        )
-        await Expense.destroy({
-            where: { userId: userId, id: expenseId }, transaction: t
-        })
-
-        await t.commit();
+        user.totalAmount -= currExpense.amount;
+        // user.save();
+        console.log(`@Message: totalAmount updated for ${user.name}`);
+        await Expense.deleteOne(currExpense._id)
+        console.log(`@Message: expenese deleted for ${currExpense._id}`);
         res.redirect('/user/daily-expenses');
 
-    } catch(err) {
-        t.rollback();
-        console.log(err);
+    } catch(e) {
+        console.log(e.message);
         res.status(401).json( { error: "Operation Not Allowed" });
     }
 }

@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
+const mongoose = require('mongoose');
 
 const sequelize = require('./util/database');
 const userRoutes = require('./routes/user');
@@ -65,22 +66,16 @@ app.use((req, res) => {
     res.sendFile(path.join(__dirname, `public/login.html`))
 })
 
-User.hasMany(Expense);
-Expense.belongsTo(User);
 
-User.hasMany(Order);
-Order.belongsTo(User);
-
-User.hasMany(ForgotPasswordRequest);
-ForgotPasswordRequest.belongsTo(User);
-
-User.hasMany(filesUploaded);
-filesUploaded.belongsTo(User);
- 
-sequelize
-    // .sync({force:true})
-    .sync()
-    .then(result => {
+async function main() {
+    try {
+        await mongoose.connect('mongodb://127.0.0.1:27017/expense-tracker')
+        console.log('DB connected');
         app.listen(3000);
-    })
-    .catch(err => console.log(err));
+        console.log('Listening ...')
+    } catch(e) {
+        console.log(e.message);
+    }
+}
+
+main()

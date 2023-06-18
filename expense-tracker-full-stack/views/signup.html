@@ -45,7 +45,7 @@
 
         formEl.addEventListener('submit', (e) => {
             e.preventDefault();
-            axios.post('http://43.207.195.127:3000/user/signup', document.querySelector('#signup-form'), {
+            axios.post('http://localhost:3000/user/signup', document.querySelector('#signup-form'), {
                 headers: {
                     'Content-Type': 'application/json'
                 }

@@ -5,53 +5,47 @@ const {v4: uuidv4 } = require('uuid');
 const bcrypt = require('bcrypt');
 
 const User = require('../models/user');
-const ForgotPasswordRequest = require('../models/forgot-password');
+const ForgotPassword = require('../models/forgot-password');
 const sequelize = require('../util/database');
 
 require('dotenv').config()
 
 exports.getResetPassword = async (req, res, next) => {
     UUID = req.params.id
-    const UData = await ForgotPasswordRequest.findOne({
-        attributes: ['isActive', 'userId'],
-        where: {
-            id: UUID
-        }
-    })
-    if( UData.dataValues['isActive'] ){
+    const UData = await ForgotPassword.findOne({ token :UUID })
+    if( UData.isActive ){
         res.sendFile(path.join(rootDir, 'views', 'reset-password.html'));
     }
 }
 
 exports.postResetPassword = async (req, res, next) => {
-    const t = await sequelize.transaction();
     const UUID = req.body.id;
     const saltrounds = 10;
     const password1 = req.body.password1;
     const password2 = req.body.password2;
     
-
     if( !password1 === password2 ){ 
         return res.status(403).json( {'message': 'Passwords Does Not Match' } ) 
     }
     try {
-        const user = await ForgotPasswordRequest.findOne( { attributes: ['isActive', 'userId' ], where: { id: UUID } } )
-        if(!user['isActive']) { 
+        const token = await ForgotPassword.findOne( { token: UUID }).select('isActive userId')
+        if(!token.isActive) { 
             res.status(400).json( { 'message': 'Invalid URL' } )
         }
         
         const hash = await bcrypt.hash(password1, saltrounds);
-        await User.update( { password: hash}, {where: { id: user['userId'] } , transaction: t } )
+        console.log(hash)
+        await User.updateOne( { _id: token.userId }, { password: hash } )
         console.log("Password Updated on Database");
         
-        await ForgotPasswordRequest.update({ isActive: false }, { where: { id: UUID }, transaction: t } )
+        token.isActive = false
+        await token.save();
         console.log('UUID is deactivated');
 
-        await t.commit();
         res.status(201).json( { 'message': 'Password Updated Successfully ' } )
     } catch(err) {
-        await t.rollback();
         console.log(err);
+        res.status(500).json( { message: 'Internal Server Error'})
     }
 }
 
@@ -61,20 +55,15 @@ exports.getForgotPassword = (req, res, next) => {
 
 exports.postForgotPassword = async (req, res, next) => {
     const user_email = req.body.email;
-
-    User.findOne( {
-        attributes: ['id', 'email'],
-        where: {
-            email: user_email
-        }
-    }).then(async (user) => {
+    User.findOne({ email: user_email }).select('id email')
+    .then(async (user) => {
         if(!user) {
             res.status(404).json( { 'message': 'User with Email does not Exists' } );
         } else {
             const UUID = uuidv4();
-            ForgotPasswordRequest.create({ id: UUID, isActive: true, userId: user.dataValues['id'] })
+            ForgotPassword.create({ token: UUID, isActive: true, userId: user._id })
             .then(() => {
-                const SibApiV3Sdk = require('sib-api-v3-sdk');
+                
                 let defaultClient = SibApiV3Sdk.ApiClient.instance;
 
                 let apiKey = defaultClient.authentications['api-key'];
@@ -85,7 +74,7 @@ exports.postForgotPassword = async (req, res, next) => {
                 let sendSmtpEmail = new SibApiV3Sdk.SendSmtpEmail();
 
                 sendSmtpEmail.subject = "{{params.subject}}";
-                sendSmtpEmail.htmlContent = "<html><body><h1>Click on <a target='_blank' href='http://43.207.195.127:3000/password/reset-password/{{params.parameter}}'>this link</a>to Reset the Password</h1></body></html>";
+                sendSmtpEmail.htmlContent = "<html><body><h1>Click on <a target='_blank' href='http://localhost:3000/password/reset-password/{{params.parameter}}'>this link</a>to Reset the Password</h1></body></html>";
                 sendSmtpEmail.sender = {"name":"Expense Tracker","email":"expensetracker@gmail.com"};
                 sendSmtpEmail.to = [{"email": user_email,"name":"Sharpener Test"}];
                 sendSmtpEmail.headers = {"Some-Custom-Name":"unique-id-1234"};

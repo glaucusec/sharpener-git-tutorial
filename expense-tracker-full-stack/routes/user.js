@@ -6,11 +6,11 @@ const userController = require('../controllers/user')
 
 const userAuthentication = require('../middleware/auth');
 
+router.get('/login', userController.getLoginPage);
+
 router.get('/signup', userController.getSignUpPage);
 
 router.post('/signup', userController.postSignUpData);
-
-router.get('/login', userController.getLoginPage);
 
 router.post('/login', userController.postLoginData);
 

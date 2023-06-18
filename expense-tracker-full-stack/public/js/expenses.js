@@ -2,7 +2,7 @@
     document.querySelector('#logout').addEventListener('click', () => {
         localStorage.removeItem('token');
         alert('You are Logged Out. Login Again');
-        window.location = 'http://43.207.195.127:3000/user/login';
+        window.location = 'http://localhost:3000/user/login';
     })
     // fetching the old report fileURLs and showing it to the screen.
     let page = 1;
@@ -63,7 +63,7 @@
     function getoldURLs(page) {
         const limit = parseInt(localStorage.getItem('limit'));
         const token = localStorage.getItem('token');
-        axios.get(`http://43.207.195.127:3000/premium/fileurls?page=${page}&limit=${limit}`, {
+        axios.get(`http://localhost:3000/premium/fileurls?page=${page}&limit=${limit}`, {
             headers: {
                 'Authorization': token
             }
@@ -74,7 +74,7 @@
         })
 
         // try {
-        //     let prevFiles = await axios.post('http://43.207.195.127:3000/premium/fileurls', {}, {
+        //     let prevFiles = await axios.post('http://localhost:3000/premium/fileurls', {}, {
         //         headers: {
         //             'Content-Type': 'application/json',
         //             'Authorization': token
@@ -103,7 +103,7 @@
     document.querySelector('#report-button').addEventListener('click', async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
-        axios.get('http://43.207.195.127:3000/premium/download-report', {
+        axios.get('http://localhost:3000/premium/download-report', {
             headers: {
                 'Authorization': token
             }
@@ -125,7 +125,7 @@
 
     document.querySelector('#leaderboard-button').addEventListener('click', async (e) => {
         e.preventDefault();
-        await axios.post('http://43.207.195.127:3000/premium/leaderboard', {}, {
+        await axios.post('http://localhost:3000/premium/leaderboard', {}, {
             headers: {
                 "Authorization": token
             }
@@ -162,7 +162,7 @@
     // Check if the user is already a existing Premium user.? (show the text 'You are premium')
     const token = localStorage.getItem('token');
     async function hideOrNot () {
-        await axios.post('http://43.207.195.127:3000/purchase/ispremium', null, {
+        await axios.post('http://localhost:3000/purchase/ispremium', null, {
             headers: {
                 "Authorization" : token
             }
@@ -187,7 +187,7 @@
         e.preventDefault();
 
         const token = localStorage.getItem('token');
-        const response = await axios.post('http://43.207.195.127:3000/purchase/premium', null, {
+        const response = await axios.post('http://localhost:3000/purchase/premium', null, {
             headers: {
                 "Authorization" : token
             }
@@ -203,7 +203,7 @@
             "order_id": response.data.orderId, //This is a sample Order ID. Pass the `id` obtained in the response of Step 1
             "handler": async function(res) {
                 const token = localStorage.getItem('token');
-                await axios.post('http://43.207.195.127:3000/purchase/updatetransactionstatus', {
+                await axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
                     success: true,
                     order_id: res.razorpay_order_id,
                     payment_id: res.razorpay_payment_id
@@ -215,7 +215,7 @@
                 }).then((res) => {
                     console.log(res);
                     alert('You are a Premium user');
-                    window.location.href = 'http://43.207.195.127:3000/user/daily-expenses'
+                    window.location.href = 'http://localhost:3000/user/daily-expenses'
                 }).catch((error) => console.log(error));
 
                 
@@ -237,7 +237,7 @@
         rzp1.open();
         rzp1.on('payment.failed', async function(response) {
             const token = localStorage.getItem('token');
-            await axios.post('http://43.207.195.127:3000/purchase/updatetransactionstatus', {
+            await axios.post('http://localhost:3000/purchase/updatetransactionstatus', {
                 success: false,
                 order_id: response.error.metadata.order_id,
                 payment_id: response.error.metadata.payment_id
@@ -265,13 +265,13 @@
             return;
         }
 
-        axios.post('http://43.207.195.127:3000/user/expenses', formData, {
+        axios.post('http://localhost:3000/user/expenses', formData, {
             headers: {
                 'Content-Type': 'application/json',
                 'Authorization': token
             }
         })
-        .then(window.location.href = 'http://43.207.195.127:3000/user/daily-expenses');
+        .then(window.location.href = 'http://localhost:3000/user/daily-expenses');
     });
 
     
@@ -299,7 +299,7 @@
         delBtn.value = 'Delete';
         delBtn.classList.add('btn', 'btn-danger');
         delBtn.onclick = () => {
-            let expense_id = expense.id;
+            let expense_id = expense._id;
             let token = localStorage.getItem('token');
             axios.delete('/user/delete', {
                 headers: {
@@ -309,7 +309,7 @@
                     id: expense_id
                 }
             })
-            .then(window.location.href = 'http://43.207.195.127:3000/user/daily-expenses')
+            .then(window.location.href = 'http://localhost:3000/user/daily-expenses')
             .catch(err => console.log(err));
         }
         tdDelete.appendChild(delBtn);
@@ -321,7 +321,7 @@
         editBtn.value = 'Edit';
         editBtn.classList.add('btn', 'btn-warning');
         editBtn.onclick = () => {
-            document.getElementById('idInputBox').value = expense.id;
+            document.getElementById('idInputBox').value = expense._id;
             document.getElementById('amountInputBox').value = expense.amount;
             document.getElementById('descInputBox').value = expense.description;
             document.getElementById('catInputBox').value = expense.category;
@@ -341,7 +341,7 @@
     // Showing existing expenses.
     async function fetchExpenses() {
         const token = localStorage.getItem('token');
-        let response = await axios.get('http://43.207.195.127:3000/user/expenses', {
+        let response = await axios.get('http://localhost:3000/user/expenses', {
             headers: {
                 "Authorization": token
             }

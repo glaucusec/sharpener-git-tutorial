@@ -58,11 +58,13 @@ exports.fileUrls = async (req, res, next) => {
 }
 
 exports.leaderBoard = async (req, res, next) => {
-    await User.findAll({
-        attributes: ['name', 'totalAmount'],
-        order: [[sequelize.col('totalAmount'), 'DESC']]
-    })
-    .then(result => res.status(200).json(result));
+    User.find()
+    .select('name totalAmount -_id')
+    .sort({ totalAmount: 'desc'})
+    .then(result => {
+        console.log(result)
+        res.status(200).json(result)
+    });
 }
 
 

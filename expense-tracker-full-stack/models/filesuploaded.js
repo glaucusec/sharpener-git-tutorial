@@ -1,18 +1,12 @@
-const Sequelize = require('sequelize');
+const mongoose = require('mongoose')
 
-const sequelize = require('../util/database');
+const Schema = mongoose.Schema
 
-const Filesuploaded = sequelize.define('filesuploaded', {
-    id: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-        autoIncrement: true,
-        primaryKey: true
-    },
+const fileSchema = new Schema({
     fileURL: {
-        type: Sequelize.STRING,
-        allowNull: false,
+        type: String,
+        required: true
     }
-}, { timestamps: false } )
+})
 
-module.exports = Filesuploaded
+module.exports = mongoose.model('filesuploaded', fileSchema);

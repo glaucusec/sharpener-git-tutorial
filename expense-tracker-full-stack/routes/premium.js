@@ -10,8 +10,8 @@ router.post('/leaderboard', premiumRouter.leaderBoard);
 
 router.post('/ispremium', middleware.authenticate ,premiumRouter.isPremium);
 
-router.get('/download-report', middleware.authenticate, premiumRouter.downloadReport);
+// router.get('/download-report', middleware.authenticate, premiumRouter.downloadReport);
 
-router.get('/fileurls', middleware.authenticate, premiumRouter.fileUrls);
+// router.get('/fileurls', middleware.authenticate, premiumRouter.fileUrls);
 
 module.exports = router;
