@@ -7,7 +7,6 @@ const path = require('path');
 const cors = require('cors');
 const mongoose = require('mongoose');
 
-const sequelize = require('./util/database');
 const userRoutes = require('./routes/user');
 const purchaseRoutes = require('./routes/purchase');
 const premiumRoutes = require('./routes/premium');
